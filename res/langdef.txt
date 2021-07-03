@@ -1,0 +1,36 @@
+|Stack manipulation
+|in|none|0|1|Gets a value from the inbox and pushes it to the stack.
+|out|none|1|0|Pops a value from the stack and puts it to the outbox.
+|dupe|none|1|2|Duplicates the value at the top of the stack and pushes it.
+|swp|none|2|2|Swaps the positions of the top two elements in the stack.
+|del|none|1|0|Pops and deletes the top item from the stack.
+|zero|none|0|1|Pushes a zero to the stack.
+|rand*|none|0|1|Pushes a random number from -999 to 999 inclusive to the stack.
+|Arithmatic
+|inc|none|1|1|Increments the value at the top of the stack.
+|dec|none|1|1|Decrements the value at the top of the stack.
+|add|none|2|1|Pops two items from the stack, adds them, and pushes the result.
+|sub|none|2|1|Pops two items from the stack, subtracts the first from the second, and pushes the result.
+|mul|none|2|1|Pops two items from the stack, adds them, and pushes the result.
+|div*|none|2|1|Pops two items from the stack, divides the second by the first, and pushes the result.
+|mod*|none|2|1|Pops two items from the stack, divides the second by the first, and pushes the remainder.
+|Control Flow
+|jmp|label|0|0|Unconditionally jump to a label.
+|jez|label|0|0|If the top value of the stack is zero jump to the label.
+|jlz|label|0|0|Jump if less than zero.
+|jgz|label|0|0|Jump if greater than zero.
+|jnz|label|0|0|Jump if not zero.
+|srt|label|0|0|Jump to subroutine.
+|ret|label|0|0|Return from subroutine.
+|Register Manipulation
+|load|reg|0|1|Get the value from the given register and push it.
+|save|reg|1|0|Pop a value from the stack and save it to the given register.
+|Psudo-Instructions
+|mark|label|0|0|Used to create labels.
+|--*|none|0|0|Create a comment.
+|Misc
+|lit|val|0|1|Push a literal value to the stack.
+|lits*|vals|0|n|Push several literal values to the stack.
+|out_all*|none|0|0|For each item on the stack pop it and outbox it.
+|print|none|0|0|Print the value on the top of the stack to the console.
+|dump|none|0|0|Print the state of the interpreter to the console.
