@@ -1,3 +1,21 @@
-lits -1 2
-mod
-print
+in
+zero
+inc
+dupe
+save a
+save b
+mark loop
+dupe
+load a
+sub
+jlz top
+del
+load a
+dupe
+out
+load b
+dupe
+save a
+add
+save b
+jmp loop

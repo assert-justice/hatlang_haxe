@@ -99,6 +99,7 @@ The following are all of the instructions and psudo instructions for Hatlang.
 |mark|label|0|0|Used to create labels.
 |--*|none|0|0|Create a comment.
 |Misc
+|brk|none|0|0|Pause execution at the instruction
 |lit|val|0|1|Push a literal value to the stack.
 |lits*|vals|0|n|Push several literal values to the stack.
 |out_all*|none|0|0|For each item on the stack pop it and outbox it.

@@ -1,0 +1,81 @@
+function in(){
+	//
+}
+function out(){
+	//
+}
+function dupe(){
+	//
+}
+function swp(){
+	//
+}
+function del(){
+	//
+}
+function zero(){
+	//
+}
+function rand(){
+	//
+}
+function inc(){
+	//
+}
+function dec(){
+	//
+}
+function add(){
+	//
+}
+function sub(){
+	//
+}
+function mul(){
+	//
+}
+function div(){
+	//
+}
+function mod(){
+	//
+}
+function jmp(){
+	//
+}
+function jez(){
+	//
+}
+function jlz(){
+	//
+}
+function jgz(){
+	//
+}
+function jnz(){
+	//
+}
+function srt(){
+	//
+}
+function ret(){
+	//
+}
+function load(){
+	//
+}
+function save(){
+	//
+}
+function lit(){
+	//
+}
+function out_all(){
+	//
+}
+function print(){
+	//
+}
+function dump(){
+	//
+}

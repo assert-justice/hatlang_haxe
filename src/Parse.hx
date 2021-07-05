@@ -29,12 +29,21 @@ class Parse {
             var token : Token = {inst: inst, lit: lit};
             tokens.push(token);
         }
+        function addLit(lit:String, ln:Int){
+            var num = Std.parseInt(lit);
+            if (num == null){
+                error("'" + lit + "' must be a number literal", ln);
+            }
+            else{
+                addToken("lit", ln, num);
+            }
+        }
         var labels = new Map<String,Int>();
         labels.set("top", 0);
         var lines = src.split('\n');
         for (ln in 0...lines.length) {
             var line = lines[ln];
-            var comment = line.indexOf("-");
+            var comment = line.indexOf("--");
             if (comment != -1){
                 line = line.substr(0, comment);
             }
@@ -67,24 +76,26 @@ class Parse {
                 addToken(op, ln, 0, s[1]);
             }
             else if (langDef[op].arg == "val"){
-                var val = Std.parseInt(s[1]);
-                if(val == null){
-                    error("'" + s[1] + "' must be a number literal", ln);
-                }
-                else{
-                    addToken(op, ln, val);
-                }
+                addLit(s[1], ln);
+                // var val = Std.parseInt(s[1]);
+                // if(val == null){
+                //     error("'" + s[1] + "' must be a number literal", ln);
+                // }
+                // else{
+                //     addToken(op, ln, val);
+                // }
             }
             else if (langDef[op].arg == "vals"){
                 for (i in 1...s.length) {
-                    var val = Std.parseInt(s[i]);
-                    if(val == null){
-                        error("'" + s[i] + "' must be a number literal", ln);
-                        break;
-                    }
-                    else{
-                        addToken("lit", ln, val);
-                    }
+                    addLit(s[i], ln);
+                    // var val = Std.parseInt(s[i]);
+                    // if(val == null){
+                    //     error("'" + s[i] + "' must be a number literal", ln);
+                    //     break;
+                    // }
+                    // else{
+                    //     addToken("lit", ln, val);
+                    // }
                 }
             }
         }

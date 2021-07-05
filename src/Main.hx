@@ -12,13 +12,9 @@ class Main {
         var src = sys.io.File.getContent("res/scripts/test.hat");
         program = Parse.parse(src, langDef);
         #end
-        // for (inst in program) {
-        //     trace(inst);
-        // }
         var interp = new Interpreter(program, langDef);
-        interp.runState = RunState.Running;
-        while (interp.runState == RunState.Running){
-            interp.cycle();
-        }
+        interp.reset([2, 10]);
+        var outbox = interp.run();
+        trace(outbox);
     }
 }
