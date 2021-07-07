@@ -1,0 +1,34 @@
+#name Addition and the Vagaries Thereof
+#desc
+You can do math now! For every two numbers in the inbox add them and outbox the result.
+#pre
+lits 5 10
+out_all
+
+#pre
+lits 5 10 20 14
+out_all
+
+#pre
+rand
+rand
+rand
+rand
+out_all
+
+#impl
+in
+in
+add
+out
+jmp top
+
+#impl
+in
+dupe
+in
+swp
+add
+out
+save a
+jmp top

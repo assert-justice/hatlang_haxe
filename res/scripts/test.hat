@@ -1,21 +1,5 @@
 in
-zero
-inc
-dupe
-save a
-save b
-mark loop
-dupe
-load a
-sub
-jlz top
-del
-load a
-dupe
-out
-load b
-dupe
-save a
+in
 add
-save b
-jmp loop
+out
+jmp top
