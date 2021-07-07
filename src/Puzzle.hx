@@ -5,14 +5,16 @@ class Puzzle {
     var preludes : Array<Array<Instruction>>;
     var impls : Array<Array<Instruction>>;
     var answers : Map<Int,Array<Int>>;
+    var langDef : Map<String,InstructionDef>;
     var name = "";
     var desc = "";
-    public function new() {
+    public function new(langDef : Map<String,InstructionDef>) {
+        this.langDef = langDef;
         preludes = new Array<Array<Instruction>>();
         impls = new Array<Array<Instruction>>();
         answers = new Map<Int,Array<Int>>();
     }
-    public function load(src : String, langDef : Map<String,InstructionDef>) {
+    public function load(src : String) {
         var mode = "none";
         var pre = new Array<String>();
         var impl = new Array<String>();

@@ -63,13 +63,16 @@ RunState.Stopped = RunState("Stopped", 2, ())
 
 class Interpreter:
     _hx_class_name = "Interpreter"
-    __slots__ = ("state", "pastStates", "program", "runState", "cycleMod", "langDef", "ip")
-    _hx_fields = ["state", "pastStates", "program", "runState", "cycleMod", "langDef", "ip"]
-    _hx_methods = ["error", "reset", "flash", "run", "stop", "prevState", "bin", "clamp", "cycle", "inb", "out", "dupe", "swp", "del", "zero", "rand", "inc", "dec", "add", "sub", "mul", "div", "mod", "jmp", "jez", "jlz", "jgz", "jnz", "srt", "ret", "load", "save", "brk", "lit", "out_all", "print", "dump"]
+    __slots__ = ("state", "pastStates", "program", "runState", "cycleMod", "langDef", "ip", "hasError", "errorMsg", "validOutbox")
+    _hx_fields = ["state", "pastStates", "program", "runState", "cycleMod", "langDef", "ip", "hasError", "errorMsg", "validOutbox"]
+    _hx_methods = ["getStatus", "error", "validSoFar", "reset", "flash", "run", "stop", "prevState", "bin", "clamp", "cycle", "inb", "out", "dupe", "swp", "del", "zero", "rand", "inc", "dec", "add", "sub", "mul", "div", "mod", "jmp", "jez", "jlz", "jgz", "jnz", "srt", "ret", "load", "save", "brk", "lit", "out_all", "print", "dump"]
 
     def __init__(self,program,langDef):
         self.langDef = None
         self.runState = None
+        self.validOutbox = None
+        self.errorMsg = ""
+        self.hasError = False
         self.ip = 0
         self.cycleMod = 10
         self.program = program
@@ -93,10 +96,39 @@ class Interpreter:
         _this.append(x)
         self.langDef = langDef
 
+    def getStatus(self):
+        out = _hx_AnonObject({'cycle': self.state.cycle, 'registerUse': self.state.registerUse, 'maxStackSize': self.state.maxStackSize, 'hasError': self.hasError, 'errorMsg': self.errorMsg})
+        return out
+
     def error(self,msg):
+        if self.hasError:
+            return
         op = python_internal_ArrayImpl._get(self.program, python_internal_ArrayImpl._get(self.state.registers, 7))
+        self.hasError = True
+        self.errorMsg = ((("null" if msg is None else msg) + " on line ") + str(((op.ln + 1))))
         self.runState = RunState.Stopped
-        print(str(((("null" if msg is None else msg) + " on line ") + str(((op.ln + 1))))))
+        print(str(self.errorMsg))
+
+    def validSoFar(self,finished = None):
+        if (finished is None):
+            finished = False
+        if (self.validOutbox is None):
+            return
+        off = (len(self.validOutbox) - len(self.state.outbox))
+        if (off < 0):
+            self.error("Too many values in the outbox")
+            return
+        if (finished and ((off > 0))):
+            self.error("Not enough values in outbox")
+            return
+        _g = 0
+        _g1 = len(self.state.outbox)
+        while (_g < _g1):
+            i = _g
+            _g = (_g + 1)
+            if (python_internal_ArrayImpl._get(self.state.outbox, i) != python_internal_ArrayImpl._get(self.validOutbox, (i + off))):
+                self.error("An incorrect value was outboxed")
+                return
 
     def reset(self,inbox = None):
         self.flash((self.pastStates[0] if 0 < len(self.pastStates) else None))
@@ -129,10 +161,13 @@ class Interpreter:
             del _this[pos:(pos + _hx_len)]
         self.runState = RunState.Paused
 
-    def run(self):
+    def run(self,inbox = None,validOutbox = None):
+        self.reset(inbox)
+        self.validOutbox = validOutbox
         self.runState = RunState.Running
         while (self.runState == RunState.Running):
             self.cycle()
+        self.validSoFar(True)
         return self.state.outbox
 
     def stop(self):
@@ -160,6 +195,10 @@ class Interpreter:
         python_internal_ArrayImpl._set(self.state.stack, (len(self.state.stack) - 1), val)
 
     def cycle(self):
+        _hx_local_0 = self.state
+        _hx_local_1 = _hx_local_0.cycle
+        _hx_local_0.cycle = (_hx_local_1 + 1)
+        _hx_local_1
         self.ip = python_internal_ArrayImpl._get(self.state.registers, 7)
         if (self.ip >= len(self.program)):
             self.stop()
@@ -172,8 +211,8 @@ class Interpreter:
             self.error(((((("Cannot execute instruction '" + ("null" if op is None else op)) + "': Stack must have ") + str(self.langDef.h.get(op,None).pops)) + " values, it has ") + str(len(self.state.stack))))
             return
         op1 = op
-        _hx_local_0 = len(op1)
-        if (_hx_local_0 == 4):
+        _hx_local_2 = len(op1)
+        if (_hx_local_2 == 4):
             if (op1 == "dump"):
                 self.dump()
             elif (op1 == "dupe"):
@@ -188,12 +227,12 @@ class Interpreter:
                 self.zero()
             else:
                 print(str((("Opcode '" + ("null" if op is None else op)) + "' not implimented")))
-        elif (_hx_local_0 == 5):
+        elif (_hx_local_2 == 5):
             if (op1 == "print"):
                 self.print()
             else:
                 print(str((("Opcode '" + ("null" if op is None else op)) + "' not implimented")))
-        elif (_hx_local_0 == 3):
+        elif (_hx_local_2 == 3):
             if (op1 == "add"):
                 self.add()
             elif (op1 == "brk"):
@@ -237,24 +276,26 @@ class Interpreter:
                 self.swp()
             else:
                 print(str((("Opcode '" + ("null" if op is None else op)) + "' not implimented")))
-        elif (_hx_local_0 == 7):
+        elif (_hx_local_2 == 7):
             if (op1 == "out_all"):
                 self.out_all()
             else:
                 print(str((("Opcode '" + ("null" if op is None else op)) + "' not implimented")))
-        elif (_hx_local_0 == 2):
+        elif (_hx_local_2 == 2):
             if (op1 == "in"):
                 self.inb()
             else:
                 print(str((("Opcode '" + ("null" if op is None else op)) + "' not implimented")))
         else:
             print(str((("Opcode '" + ("null" if op is None else op)) + "' not implimented")))
+        if (len(self.state.stack) > self.state.maxStackSize):
+            self.state.maxStackSize = len(self.state.stack)
         if (self.ip == python_internal_ArrayImpl._get(self.state.registers, 7)):
-            _hx_local_1 = self.state.registers
-            _hx_local_2 = 7
-            _hx_local_3 = (_hx_local_1[_hx_local_2] if _hx_local_2 >= 0 and _hx_local_2 < len(_hx_local_1) else None)
-            python_internal_ArrayImpl._set(_hx_local_1, _hx_local_2, (_hx_local_3 + 1))
-            _hx_local_3
+            _hx_local_3 = self.state.registers
+            _hx_local_4 = 7
+            _hx_local_5 = (_hx_local_3[_hx_local_4] if _hx_local_4 >= 0 and _hx_local_4 < len(_hx_local_3) else None)
+            python_internal_ArrayImpl._set(_hx_local_3, _hx_local_4, (_hx_local_5 + 1))
+            _hx_local_5
         else:
             python_internal_ArrayImpl._set(self.state.registers, 7, self.ip)
 
@@ -272,6 +313,7 @@ class Interpreter:
         _this1 = self.state.stack
         x = (None if ((len(_this1) == 0)) else _this1.pop())
         _this.append(x)
+        self.validSoFar()
 
     def dupe(self):
         _this = self.state.stack
@@ -456,14 +498,15 @@ class Main:
 
     @staticmethod
     def main():
-        puzzle = ""
         langDefStr = sys_io_File.getContent("res/langdef.txt")
         langDef = LanguageDef.getDef(langDefStr)
         src = sys_io_File.getContent("res/scripts/test.hat")
         program = Parse.parse(src,langDef)
         puzzleStr = sys_io_File.getContent("res/puzzles/test.txt")
-        puzzle = Puzzle()
-        puzzle.load(puzzleStr,langDef)
+        interp = Interpreter(program,langDef)
+        outbox = interp.run([2, 10],[12])
+        print(str(outbox))
+        print(str(interp.getStatus()))
 
 
 class Parse:
@@ -561,148 +604,6 @@ class Parse:
                 return token.inst
             return list(map(_hx_local_4,tokens))
         return _hx_local_5()
-
-
-class Puzzle:
-    _hx_class_name = "Puzzle"
-    __slots__ = ("preludes", "impls", "answers", "name", "desc")
-    _hx_fields = ["preludes", "impls", "answers", "name", "desc"]
-    _hx_methods = ["load", "validate"]
-
-    def __init__(self):
-        self.desc = ""
-        self.name = ""
-        self.preludes = list()
-        self.impls = list()
-        self.answers = haxe_ds_IntMap()
-
-    def load(self,src,langDef):
-        mode = "none"
-        pre = list()
-        impl = list()
-        _g = 0
-        _g1 = src.split("\n")
-        while (_g < len(_g1)):
-            line = (_g1[_g] if _g >= 0 and _g < len(_g1) else None)
-            _g = (_g + 1)
-            if line.startswith("#"):
-                startIndex = None
-                idx = (line.find(" ") if ((startIndex is None)) else HxString.indexOfImpl(line," ",startIndex))
-                start = HxString.substr(line,1,None)
-                end = ""
-                if (idx != -1):
-                    start = HxString.substr(line,1,(idx - 1))
-                    end = StringTools.trim(HxString.substr(line,idx,None))
-                mode = start
-                line = end
-                if (mode == "pre"):
-                    if (len(pre) > 0):
-                        _this = self.preludes
-                        x = Parse.parse("\n".join([python_Boot.toString1(x1,'') for x1 in pre]),langDef)
-                        _this.append(x)
-                        l = len(pre)
-                        if (l < 0):
-                            idx1 = -1
-                            v = None
-                            l1 = len(pre)
-                            while (l1 < idx1):
-                                pre.append(None)
-                                l1 = (l1 + 1)
-                            if (l1 == idx1):
-                                pre.append(v)
-                            else:
-                                pre[idx1] = v
-                        elif (l > 0):
-                            pos = 0
-                            _hx_len = l
-                            if (pos < 0):
-                                pos = (len(pre) + pos)
-                            if (pos < 0):
-                                pos = 0
-                            res = pre[pos:(pos + _hx_len)]
-                            del pre[pos:(pos + _hx_len)]
-                elif (mode == "impl"):
-                    if (len(impl) > 0):
-                        _this1 = self.impls
-                        x1 = Parse.parse("\n".join([python_Boot.toString1(x1,'') for x1 in impl]),langDef)
-                        _this1.append(x1)
-                        l2 = len(impl)
-                        if (l2 < 0):
-                            idx2 = -1
-                            v1 = None
-                            l3 = len(impl)
-                            while (l3 < idx2):
-                                impl.append(None)
-                                l3 = (l3 + 1)
-                            if (l3 == idx2):
-                                impl.append(v1)
-                            else:
-                                impl[idx2] = v1
-                        elif (l2 > 0):
-                            pos1 = 0
-                            len1 = l2
-                            if (pos1 < 0):
-                                pos1 = (len(impl) + pos1)
-                            if (pos1 < 0):
-                                pos1 = 0
-                            res1 = impl[pos1:(pos1 + len1)]
-                            del impl[pos1:(pos1 + len1)]
-            mode1 = mode
-            _hx_local_3 = len(mode1)
-            if (_hx_local_3 == 4):
-                if (mode1 == "desc"):
-                    if (len(self.desc) > 0):
-                        _hx_local_4 = self
-                        _hx_local_5 = _hx_local_4.desc
-                        _hx_local_4.desc = (("null" if _hx_local_5 is None else _hx_local_5) + "\n")
-                        _hx_local_4.desc
-                    _hx_local_6 = self
-                    _hx_local_7 = _hx_local_6.desc
-                    _hx_local_6.desc = (("null" if _hx_local_7 is None else _hx_local_7) + ("null" if line is None else line))
-                    _hx_local_6.desc
-                elif (mode1 == "impl"):
-                    impl.append(line)
-                elif (mode1 == "name"):
-                    if (len(self.name) > 0):
-                        _hx_local_8 = self
-                        _hx_local_9 = _hx_local_8.name
-                        _hx_local_8.name = (("null" if _hx_local_9 is None else _hx_local_9) + "\n")
-                        _hx_local_8.name
-                    _hx_local_10 = self
-                    _hx_local_11 = _hx_local_10.name
-                    _hx_local_10.name = (("null" if _hx_local_11 is None else _hx_local_11) + ("null" if line is None else line))
-                    _hx_local_10.name
-            elif (_hx_local_3 == 3):
-                if (mode1 == "pre"):
-                    pre.append(line)
-            else:
-                pass
-        _this = self.preludes
-        x = Parse.parse("\n".join([python_Boot.toString1(x1,'') for x1 in pre]),langDef)
-        _this.append(x)
-        _this = self.impls
-        x = Parse.parse("\n".join([python_Boot.toString1(x1,'') for x1 in impl]),langDef)
-        _this.append(x)
-        print(str(("Name: " + HxOverrides.stringOrNull(self.name))))
-        print(str(("Description: " + HxOverrides.stringOrNull(self.desc))))
-        print("preludes")
-        _g = 0
-        _g1 = self.preludes
-        while (_g < len(_g1)):
-            pre = (_g1[_g] if _g >= 0 and _g < len(_g1) else None)
-            _g = (_g + 1)
-            print(str(("\t" + HxOverrides.stringOrNull(((("[" + HxOverrides.stringOrNull(",".join([python_Boot.toString1(x1,'') for x1 in pre]))) + "]"))))))
-        print("impls")
-        _g = 0
-        _g1 = self.impls
-        while (_g < len(_g1)):
-            impl = (_g1[_g] if _g >= 0 and _g < len(_g1) else None)
-            _g = (_g + 1)
-            print(str(("\t" + HxOverrides.stringOrNull(((("[" + HxOverrides.stringOrNull(",".join([python_Boot.toString1(x1,'') for x1 in impl]))) + "]"))))))
-
-    def validate(self,program):
-        pass
-
 
 
 class Std:
@@ -826,16 +727,6 @@ class StringTools:
 class haxe_IMap:
     _hx_class_name = "haxe.IMap"
     __slots__ = ()
-
-
-class haxe_ds_IntMap:
-    _hx_class_name = "haxe.ds.IntMap"
-    __slots__ = ("h",)
-    _hx_fields = ["h"]
-
-    def __init__(self):
-        self.h = dict()
-
 
 
 class haxe_ds_StringMap:

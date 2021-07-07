@@ -12,6 +12,14 @@ typedef InterpreterState = {
     var maxStackSize : Int;
 }
 
+typedef InterpreterStatus = {
+    var cycle : Int;
+    var registerUse : Int;
+    var maxStackSize : Int;
+    var hasError : Bool;
+    var errorMsg : String;
+}
+
 enum RunState {
     Running;
     Paused;
@@ -26,6 +34,9 @@ class Interpreter {
     public var cycleMod : Int = 10;
     var langDef : Map<String,InstructionDef>;
     var ip = 0;
+    var hasError = false;
+    var errorMsg = "";
+    var validOutbox : Array<Int> = null;
 
     public function new(program : Array<Instruction>, langDef : Map<String,InstructionDef>) {
         this.program = program;
@@ -43,10 +54,41 @@ class Interpreter {
         pastStates.push(state);
         this.langDef = langDef;
     }
+    public function getStatus() {
+        var out : InterpreterStatus = {
+            cycle: state.cycle,
+            registerUse: state.registerUse,
+            maxStackSize: state.maxStackSize,
+            hasError: hasError,
+            errorMsg: errorMsg,
+        }
+        return out;
+    }
     function error(msg : String) {
+        if (hasError) return;
         var op = program[state.registers[7]];
+        hasError = true;
+        errorMsg = msg + " on line " + (op.ln + 1);
         runState = RunState.Stopped;
-        trace(msg + " on line " + (op.ln + 1));
+        trace(errorMsg);
+    }
+    function validSoFar(finished = false) {
+        if (validOutbox == null) return;
+        var off = validOutbox.length - state.outbox.length;
+        if (off < 0) {
+            error("Too many values in the outbox");
+            return;
+        }
+        if (finished && off > 0){
+            error("Not enough values in outbox");
+            return;
+        }
+        for (i in 0...state.outbox.length) {
+            if (state.outbox[i] != validOutbox[i + off]){
+                error("An incorrect value was outboxed");
+                return;
+            }
+        }
     }
     public function reset(inbox : Array<Int> = null) {
         flash(pastStates[0]);
@@ -59,11 +101,14 @@ class Interpreter {
         pastStates.resize(1);
         runState = RunState.Paused;
     }
-    public function run() {
+    public function run(inbox : Array<Int> = null, validOutbox : Array<Int> = null) {
+        reset(inbox);
+        this.validOutbox = validOutbox;
         runState = RunState.Running;
         while(runState == RunState.Running){
             cycle();
         }
+        validSoFar(true);
         return state.outbox;
     }
     public function stop() {
@@ -85,6 +130,7 @@ class Interpreter {
         state.stack[state.stack.length - 1] = val;
     }
     public function cycle() {
+        state.cycle++;
         ip = state.registers[7];
         if (ip >= program.length){
             stop();
@@ -161,6 +207,9 @@ class Interpreter {
                 brk();
             default: trace("Opcode '" + op + "' not implimented");
         }
+        if (state.stack.length > state.maxStackSize) {
+            state.maxStackSize = state.stack.length;
+        }
         if (ip == state.registers[7]){
             state.registers[7]++;
         }
@@ -178,6 +227,7 @@ class Interpreter {
     }
     function out(){
         state.outbox.push(state.stack.pop());
+        validSoFar();
     }
     function dupe(){
         state.stack.push(state.stack[state.stack.length-1]);
