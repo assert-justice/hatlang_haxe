@@ -38,21 +38,26 @@ class Interpreter {
     var errorMsg = "";
     var validOutbox : Array<Int> = null;
 
-    public function new(program : Array<Instruction>, langDef : Map<String,InstructionDef>) {
-        this.program = program;
-        pastStates = new Array<InterpreterState>();
-        state = {
-            stack: new Array<Int>(),
-            inbox: new Array<Int>(),
-            outbox: new Array<Int>(),
-            callStack: new Array<Int>(),
-            registers: [for (_ in 0...8) 0],
-            cycle: 0,
-            registerUse: 0,
-            maxStackSize: 0
-        }
-        pastStates.push(state);
+    public function new(langDef : Map<String,InstructionDef>) {
+        program = [];
+        // pastStates = [];
+        // state = {
+        //     stack: [],
+        //     inbox: [],
+        //     outbox: [],
+        //     callStack: [],
+        //     registers: [for (_ in 0...8) 0],
+        //     cycle: 0,
+        //     registerUse: 0,
+        //     maxStackSize: 0
+        // }
+        // pastStates.push(state);
+        reset();
         this.langDef = langDef;
+    }
+    public function setProgram(program : Array<Instruction>) {
+        this.program = program;
+        reset();
     }
     public function getStatus() {
         var out : InterpreterStatus = {
@@ -91,7 +96,18 @@ class Interpreter {
         }
     }
     public function reset(inbox : Array<Int> = null) {
-        flash(pastStates[0]);
+        pastStates = [];
+        state = {
+            stack: [],
+            inbox: [],
+            outbox: [],
+            callStack: [],
+            registers: [for (_ in 0...8) 0],
+            cycle: 0,
+            registerUse: 0,
+            maxStackSize: 0
+        }
+        pastStates.push(state);
         if(inbox != null){
             state.inbox = inbox;
         }

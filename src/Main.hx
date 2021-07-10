@@ -13,12 +13,12 @@ class Main {
         program = Parse.parse(src, langDef);
         var puzzleStr = sys.io.File.getContent("res/puzzles/test.txt");
         #end
-        //var puzzle = new Puzzle(langDef);
-        //puzzle.load(puzzleStr);
-        var interp = new Interpreter(program, langDef);
+        var puzzle = new Puzzle(langDef);
+        puzzle.load(puzzleStr);
+        //var interp = new Interpreter(program, langDef);
         //interp.reset([2, 10]);
-        var outbox = interp.run([2,10], [12]);
-        trace(outbox);
-        trace(interp.getStatus());
+        //var outbox = interp.run([2,10], [12]);
+        //trace(outbox);
+        //trace(interp.getStatus());
     }
 }

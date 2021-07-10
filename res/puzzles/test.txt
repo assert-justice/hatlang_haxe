@@ -9,7 +9,7 @@ out_all
 lits 5 10 20 14
 out_all
 
-#pre
+#rand
 rand
 rand
 rand
@@ -32,3 +32,4 @@ add
 out
 save a
 jmp top
+#end

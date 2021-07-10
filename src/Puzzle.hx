@@ -1,8 +1,20 @@
+import Interpreter.InterpreterStatus;
 import Parse.Instruction;
 import LanguageDef.InstructionDef;
 
+typedef PuzzleSummary = {
+    var inputs : Array<Array<Int>>;
+    var outputs : Array<Array<Int>>;
+    var bestSize : Int;
+    var bestStackSize : Int;
+    var bestCycles : Int;
+    var bestRegUse : Int;
+    var rands : Array<Array<Instruction>>;
+}
+
 class Puzzle {
     var preludes : Array<Array<Instruction>>;
+    var rands : Array<Array<Instruction>>;
     var impls : Array<Array<Instruction>>;
     var answers : Map<Int,Array<Int>>;
     var langDef : Map<String,InstructionDef>;
@@ -11,63 +23,65 @@ class Puzzle {
     public function new(langDef : Map<String,InstructionDef>) {
         this.langDef = langDef;
         preludes = new Array<Array<Instruction>>();
+        rands = new Array<Array<Instruction>>();
         impls = new Array<Array<Instruction>>();
         answers = new Map<Int,Array<Int>>();
     }
     public function load(src : String) {
         var mode = "none";
-        var pre = new Array<String>();
-        var impl = new Array<String>();
+        var prog = new Array<String>();
         for (line in src.split("\n")) {
-            //if (StringTools.startsWith(line, "--")) continue;
             if (StringTools.startsWith(line, "#")){
-                var idx = line.indexOf(" ");
-                var start = line.substr(1);
-                var end = "";
-                if(idx != -1){
-                    start = line.substr(1, idx - 1);
-                    end = StringTools.trim(line.substr(idx));
-                }
-                mode = start;
-                line = end;
+                var src = prog.join("\n");
+                prog.resize(0);
                 if (mode == "pre"){
-                    if (pre.length > 0){
-                        preludes.push(Parse.parse(pre.join("\n"), langDef));
-                        pre.resize(0);
-                    }
+                    preludes.push(Parse.parse(src, langDef));
+                }
+                else if (mode == "rand"){
+                    rands.push(Parse.parse(src, langDef));
                 }
                 else if (mode == "impl"){
-                    if (impl.length > 0){
-                        impls.push(Parse.parse(impl.join("\n"), langDef));
-                        impl.resize(0);
-                    }
+                    impls.push(Parse.parse(src, langDef));
                 }
+                else if (mode == "name"){
+                    name += src;
+                }
+                else if (mode == "desc"){
+                    desc += src;
+                }
+                line = line.substr(1);
+                var words = line.split(" ");
+                mode = StringTools.trim(words.shift());
+                line = words.join(" ");
             }
-            switch mode {
-                case "name":
-                    if(name.length > 0) name += "\n";
-                    name += line;
-                case "desc":
-                    if(desc.length > 0) desc += "\n";
-                    desc += line;
-                case "pre":
-                    pre.push(line);
-                case "impl":
-                    impl.push(line);
-            }
+            prog.push(line);
         }
-        preludes.push(Parse.parse(pre.join("\n"), langDef));
-        impls.push(Parse.parse(impl.join("\n"), langDef));
         trace("Name: " + name);
         trace("Description: " + desc);
-        trace("preludes");
-        for (pre in preludes) {
-            trace("\t" + pre.toString());
-        }
-        trace("impls");
-        for (impl in impls) {
-            trace("\t" + impl.toString());
-        }
+        var summary : PuzzleSummary;
+        var interp = new Interpreter(langDef);
+        summary.inputs = [];
+        // for (impl in impls) {
+        //     var agg = new Array<InterpreterStatus>();
+        //     for (pre in preludes) {
+        //         interp.setProgram(pre);
+        //         var outbox = interp.run();
+        //         agg.push(interp.getStatus());
+        //         trace(outbox);
+        //     }
+        // }
+        // trace("preludes");
+        // for (pre in preludes) {
+        //     trace("\t" + pre.toString());
+        // }
+        // trace("rands");
+        // for (rand in rands) {
+        //     trace("\t" + rand.toString());
+        // }
+        // trace("impls");
+        // for (impl in impls) {
+        //     trace("\t" + impl.toString());
+        // }
     }
     public function validate(program : Array<Instruction>) {
         //
